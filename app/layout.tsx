@@ -1,4 +1,4 @@
-import { AuthKitProvider } from '@workos-inc/authkit-nextjs/components';
+import { AuthKitProvider } from '@workos-inc/authkit-nextjs';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

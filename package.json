@@ -1,7 +1,7 @@
 {
   "name": "soul-guardian-ui",
   "version": "0.1.0",
-  "private": true,
+  "private": "true",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@workos-inc/authkit-nextjs": "^2.11.0",
+    "@workos-inc/authkit-nextjs": "0.17.2",
     "next": "^15.5.6",
     "react": "19.2.0",
     "react-dom": "19.2.0"
