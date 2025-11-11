@@ -1,6 +1,5 @@
 [build]
   command = "npm run build"
-  publish = ".next"
   # To ensure that netlify doesn't scan the public secret
   # https://docs.netlify.com/configure-builds/environment-variables/#secrets-scan-omit-keys
   environment = { SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_WORKOS_REDIRECT_URI" }
