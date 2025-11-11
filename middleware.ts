@@ -1,7 +1,13 @@
-import { authkitMiddleware } from '@workos-inc/authkit-nextjs';
+import { authkitMiddleware } from "@workos-inc/authkit-nextjs";
 
 export default authkitMiddleware();
 
-// Match against pages that require authentication
-// Leave this out if you want authentication on every page in your application
-// export const config = { matcher: ['/'] };
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for static files, API routes, etc.
+     * The root route ('/') is implicitly covered here.
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|_next/server).*)",
+  ],
+};
