@@ -1,4 +1,4 @@
-import { authkitMiddleware } from '@workos-inc/authkit-nextjs';
+import { authkitMiddleware } from "@workos-inc/authkit-nextjs";
 
 // The middlewareAuth object enables authentication on all paths 
 // and specifies which paths (like your root '/') are allowed to be 
