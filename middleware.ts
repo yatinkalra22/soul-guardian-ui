@@ -12,8 +12,10 @@ export default authkitMiddleware({
 });
 
 export const config = {
-    // This matcher excludes the internal Next.js files and API routes
+    // This matcher includes all routes except Next.js internals and static files
+    // The pattern now properly matches the root path '/' as well
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico|_next/server).*)',
+        '/',
+        '/((?!_next/static|_next/image|favicon.ico).*)',
     ],
 };
