@@ -22,6 +22,3 @@ export const config = {
         '/((?!_next/static|_next/image|favicon.ico).*)',
     ],
 };
-
-// Explicitly set runtime to edge for Netlify compatibility
-export const runtime = 'edge';
