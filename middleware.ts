@@ -8,17 +8,3 @@ export default authkitMiddleware({
         unauthenticatedPaths: ['/', '/callback'],
     },
 });
-
-// Use the recommended matcher pattern from WorkOS documentation
-// This ensures middleware runs on all application routes
-export const config = {
-    matcher: [
-        /*
-         * Match all request paths except for the ones starting with:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         */
-        '/((?!_next/static|_next/image|favicon.ico).*)',
-    ],
-};
