@@ -1,9 +1,14 @@
-import Link from 'next/link';
 import {
   getSignUpUrl,
   withAuth,
   signOut,
 } from '@workos-inc/authkit-nextjs';
+import { HomeContent } from './components/home-content';
+
+async function handleSignOut() {
+  'use server';
+  await signOut();
+}
 
 export default async function HomePage() {
   // Retrieves the user from the session or returns `null` if no user is signed in
@@ -12,23 +17,11 @@ export default async function HomePage() {
   // Get the URL to redirect the user to AuthKit to sign up
   const signUpUrl = await getSignUpUrl();
 
-  if (!user) {
-    return (
-      <>
-        <Link href={signUpUrl}>Sign up</Link>
-      </>
-    );
-  }
-
   return (
-    <form
-      action={async () => {
-        'use server';
-        await signOut();
-      }}
-    >
-      <p>Welcome back{user.firstName && `, ${user.firstName}`}</p>
-      <button type="submit">Sign out</button>
-    </form>
+    <HomeContent
+      user={user}
+      signUpUrl={signUpUrl}
+      signOutAction={handleSignOut}
+    />
   );
 }
