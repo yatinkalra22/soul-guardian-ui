@@ -3,7 +3,7 @@ import {
   withAuth,
   signOut,
 } from '@workos-inc/authkit-nextjs';
-import { HomeContent } from './components/home-content';
+import { HomeContent } from '../components/home-content';
 
 async function handleSignOut() {
   'use server';

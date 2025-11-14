@@ -1,5 +1,5 @@
 import { AuthKitProvider } from '@workos-inc/authkit-nextjs';
-import { ChakraUIProvider } from './providers/chakra-provider';
+import { ChakraUIProvider } from '../providers/chakra-provider';
 import { Inter } from 'next/font/google';
 import './globals.css';
 

@@ -2,7 +2,7 @@
 
 import { ChakraProvider } from '@chakra-ui/react';
 import { ThemeProvider } from 'next-themes';
-import system from '@/app/theme';
+import system from '@/theme';
 
 export function ChakraUIProvider({ children }: { children: React.ReactNode }) {
   return (
