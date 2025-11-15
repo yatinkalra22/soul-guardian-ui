@@ -1,0 +1,9 @@
+# Ignorespell: words to ignore for project spell-checking
+# Generated from components/homeContent.tsx attachments
+
+workos
+authkit
+chakra
+
+# If you use a specific spell-checker (cspell, codespell, etc.), add this file's words
+# to its configuration or point the tool to this file as needed.
