@@ -25,6 +25,7 @@ export interface AuthExchangeResponse {
 export interface LogoutResponse {
   success: boolean;
   message: string;
+  workosLogoutUrl?: string;
 }
 
 /**

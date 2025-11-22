@@ -17,6 +17,7 @@ export const APP_METADATA = {
  */
 export const COOKIES = {
   AUTH_TOKEN: 'auth_token',
+  WOS_SESSION: 'wos-session', // WorkOS session ID cookie
 } as const;
 
 /**
