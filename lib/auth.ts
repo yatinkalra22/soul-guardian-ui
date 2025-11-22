@@ -1,4 +1,9 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { logout } from './api/auth';
+import { COOKIES } from '@/constants/app';
+import { JWT_CONFIG } from '@/constants/auth';
+import { PUBLIC_ROUTES } from '@/constants/routes';
 
 export interface User {
   id: string;
@@ -19,13 +24,13 @@ export interface AuthResult {
 function decodeJWT(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split('.');
-    if (parts.length !== 3) {
+    if (parts.length !== JWT_CONFIG.PARTS_COUNT) {
       return null;
     }
 
     // Decode the payload (second part)
-    const payload = parts[1];
-    const decoded = Buffer.from(payload, 'base64').toString('utf-8');
+    const payload = parts[JWT_CONFIG.PAYLOAD_INDEX];
+    const decoded = Buffer.from(payload, JWT_CONFIG.ENCODING).toString('utf-8');
     return JSON.parse(decoded);
   } catch (error) {
     console.error('Failed to decode JWT:', error);
@@ -41,7 +46,7 @@ export async function getAuthUser(): Promise<AuthResult> {
   const cookieStore = await cookies();
 
   // Get the auth token from your backend
-  const authToken = cookieStore.get('auth_token');
+  const authToken = cookieStore.get(COOKIES.AUTH_TOKEN);
 
   if (!authToken?.value) {
     console.log('No auth token found in cookies');
@@ -65,8 +70,6 @@ export async function getAuthUser(): Promise<AuthResult> {
       firstName: payload.firstName as string,
       lastName: payload.lastName as string,
     };
-
-    console.log('Extracted user:', user);
     return { user };
   } catch (error) {
     console.error('Failed to extract user from JWT:', error);
@@ -75,12 +78,24 @@ export async function getAuthUser(): Promise<AuthResult> {
 }
 
 /**
- * Sign out by clearing the backend cookies
+ * Sign out by calling the backend logout endpoint and clearing cookies
  */
 export async function signOutUser() {
   'use server';
-  const cookieStore = await cookies();
 
-  // Clear your backend cookie
-  cookieStore.delete('auth_token');
+  const cookieStore = await cookies();
+  const authToken = cookieStore.get(COOKIES.AUTH_TOKEN);
+
+  try {
+    // Call the backend logout endpoint to clear the session
+    await logout(authToken?.value);
+  } catch (error) {
+    console.error('Error calling backend logout:', error);
+  }
+
+  // Clear the frontend cookie
+  cookieStore.delete(COOKIES.AUTH_TOKEN);
+
+  // Redirect to home page
+  redirect(PUBLIC_ROUTES.HOME);
 }

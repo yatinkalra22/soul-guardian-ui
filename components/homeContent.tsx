@@ -14,6 +14,13 @@ import {
   Image,
 } from '@chakra-ui/react';
 import { ColorModeToggle } from './colorModeToggle';
+import { getAvatars, createAvatar, deleteAvatar, Avatar } from '@/lib/api/avatar';
+import {
+  BUTTON_LABELS,
+  ERROR_MESSAGES,
+  MESSAGES,
+  DEFAULT_AVATAR_RELATIONSHIP,
+} from '@/constants';
 
 interface HomeContentProps {
   user: {
@@ -23,21 +30,13 @@ interface HomeContentProps {
   signOutAction?: () => Promise<void>;
 }
 
-type Avatar = {
-  id: string;
-  name: string;
-  relationship: string;
-  image?: string | null;
-};
-
 function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> }) {
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
-  const [relationship, setRelationship] = useState('Friend');
+  const [relationship, setRelationship] = useState<string>(DEFAULT_AVATAR_RELATIONSHIP);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const MCP_URL = process.env.NEXT_PUBLIC_RAINDROP_MCP_URL ?? '/api/avatars';
 
   useEffect(() => {
     if (!imageFile) {
@@ -50,19 +49,14 @@ function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> 
     return () => URL.revokeObjectURL(url);
   }, [imageFile]);
 
-  // fetch avatars from MCP endpoint
+  // fetch avatars from API
   useEffect(() => {
     let mounted = true;
 
     async function fetchAvatars() {
       try {
-        const res = await fetch(MCP_URL, { cache: 'no-store' });
-        if (!res.ok) {
-          console.warn('Failed to fetch avatars from MCP', res.status);
-          return;
-        }
-        const data: Avatar[] = await res.json();
-        if (mounted) setAvatars(data ?? []);
+        const data = await getAvatars();
+        if (mounted) setAvatars(data);
       } catch (err) {
         console.warn('Error fetching avatars', err);
       }
@@ -72,75 +66,45 @@ function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> 
     return () => {
       mounted = false;
     };
-  }, [MCP_URL]);
+  }, []);
 
   function resetForm() {
     setName('');
-    setRelationship('Friend');
+    setRelationship(DEFAULT_AVATAR_RELATIONSHIP);
     setImageFile(null);
     setPreview(null);
   }
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!name.trim()) {
-      alert('Please enter a name for the avatar');
+      alert(ERROR_MESSAGES.AVATAR.NAME_REQUIRED);
       return;
     }
 
-    // POST to MCP endpoint. Use FormData to allow optional image upload.
-    (async () => {
-      try {
-        const fd = new FormData();
-        fd.append('name', name.trim());
-        fd.append('relationship', relationship);
-        if (imageFile) fd.append('photo', imageFile);
+    try {
+      const created = await createAvatar({
+        name: name.trim(),
+        relationship,
+        photo: imageFile ?? undefined,
+      });
 
-        const res = await fetch(MCP_URL, {
-          method: 'POST',
-          body: fd,
-        });
-
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          console.warn('Failed to add avatar', res.status, txt);
-          alert('Failed to add avatar');
-          return;
-        }
-
-        // Expect the created avatar in response; otherwise re-fetch.
-        const created: Avatar | null = await res.json().catch(() => null);
-        if (created) {
-          setAvatars((s) => [created, ...s]);
-        } else {
-          // fallback: refetch list
-          const listRes = await fetch(MCP_URL, { cache: 'no-store' });
-          if (listRes.ok) setAvatars((await listRes.json()) ?? []);
-        }
-
-        resetForm();
-        setShowModal(false);
-      } catch (err) {
-        console.error('Error adding avatar', err);
-        alert('Error adding avatar');
-      }
-    })();
+      setAvatars((s) => [created, ...s]);
+      resetForm();
+      setShowModal(false);
+    } catch (err) {
+      console.error(ERROR_MESSAGES.AVATAR.CREATE_FAILED, err);
+      alert(ERROR_MESSAGES.AVATAR.CREATE_FAILED);
+    }
   }
 
-  function handleDelete(id: string) {
-    (async () => {
-      try {
-        const res = await fetch(`${MCP_URL}/${id}`, { method: 'DELETE' });
-        if (!res.ok) {
-          console.warn('Failed to delete avatar', res.status);
-          alert('Failed to delete avatar');
-          return;
-        }
-        setAvatars((s) => s.filter((a) => a.id !== id));
-      } catch (err) {
-        console.error('Error deleting avatar', err);
-        alert('Error deleting avatar');
-      }
-    })();
+  async function handleDelete(id: string) {
+    try {
+      await deleteAvatar(id);
+      setAvatars((s) => s.filter((a) => a.id !== id));
+    } catch (err) {
+      console.error(ERROR_MESSAGES.AVATAR.DELETE_FAILED, err);
+      alert(ERROR_MESSAGES.AVATAR.DELETE_FAILED);
+    }
   }
 
   return (
@@ -266,17 +230,17 @@ export function HomeContent({ user, signUpUrl, signOutAction }: HomeContentProps
           <Card.Root bg="bg.surface" borderColor="border.default" borderWidth="1px" w="full">
             <Card.Body>
               <Heading color="text.primary" mb={4}>
-                Welcome to Soul Guardian
+                {MESSAGES.WELCOME}
               </Heading>
               <Text color="text.secondary" mb={6}>
-                Please sign up to continue
+                {MESSAGES.SIGN_UP_PROMPT}
               </Text>
               <Link href={signUpUrl}>
                 <Button
                   colorPalette="blue"
                   size="lg"
                 >
-                  Sign up
+                  {BUTTON_LABELS.SIGN_UP}
                 </Button>
               </Link>
             </Card.Body>

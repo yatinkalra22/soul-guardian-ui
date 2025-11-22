@@ -1,9 +1,13 @@
 import { authkitMiddleware } from "@workos-inc/authkit-nextjs";
+import { UNAUTHENTICATED_PATHS } from "@/constants/routes";
 
 /**
  * WorkOS AuthKit Middleware Configuration
  *
  * ⚠️ IMPORTANT: We are locked to @workos-inc/authkit-nextjs@0.17.2
+ *
+ * See constants/auth.ts for detailed information about why we're locked to this version
+ * and when it's safe to upgrade.
  *
  * WHY: Versions 1.0+ have a known bug with Netlify deployments where the middleware
  * header check fails, causing this error:
@@ -28,6 +32,6 @@ import { authkitMiddleware } from "@workos-inc/authkit-nextjs";
 export default authkitMiddleware({
     middlewareAuth: {
         enabled: true,
-        unauthenticatedPaths: ['/', '/callback', '/unauthorize'],
+        unauthenticatedPaths: [...UNAUTHENTICATED_PATHS],
     },
 });
