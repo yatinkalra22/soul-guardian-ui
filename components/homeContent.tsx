@@ -1,4 +1,4 @@
- 'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -253,6 +253,7 @@ function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> 
     </>
   );
 }
+
 export function HomeContent({ user, signUpUrl, signOutAction }: HomeContentProps) {
   if (!user) {
     return (
@@ -302,4 +303,3 @@ export function HomeContent({ user, signUpUrl, signOutAction }: HomeContentProps
     </Box>
   );
 }
-
