@@ -12,6 +12,9 @@ import {
   Input,
   HStack,
   Image,
+  Field,
+  NativeSelectRoot,
+  NativeSelectField,
 } from '@chakra-ui/react';
 import { ColorModeToggle } from './colorModeToggle';
 import { getAvatars, createAvatar, deleteAvatar, Avatar } from '@/lib/api/avatar';
@@ -35,9 +38,11 @@ function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> 
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
-  const [relationship, setRelationship] = useState<string>(DEFAULT_AVATAR_RELATIONSHIP);
+  const [relationship, setRelationship] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [nameTouched, setNameTouched] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!imageFile) {
@@ -71,14 +76,16 @@ function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> 
 
   function resetForm() {
     setName('');
-    setRelationship(DEFAULT_AVATAR_RELATIONSHIP);
+    setRelationship('');
     setImageFile(null);
     setPreview(null);
+    setNameTouched(false);
+    setServerError(null);
   }
 
   async function handleAdd() {
+    setNameTouched(true);
     if (!name.trim()) {
-      alert(ERROR_MESSAGES.AVATAR.NAME_REQUIRED);
       return;
     }
 
@@ -90,11 +97,11 @@ function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> 
       });
 
       setAvatars((s) => [created, ...s]);
-      resetForm();
       setShowModal(false);
+      resetForm();
     } catch (err) {
       console.error(ERROR_MESSAGES.AVATAR.CREATE_FAILED, err);
-      alert(ERROR_MESSAGES.AVATAR.CREATE_FAILED);
+      setServerError(ERROR_MESSAGES.AVATAR.CREATE_FAILED);
     }
   }
 
@@ -104,7 +111,7 @@ function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> 
       setAvatars((s) => s.filter((a) => a.id !== id));
     } catch (err) {
       console.error(ERROR_MESSAGES.AVATAR.DELETE_FAILED, err);
-      alert(ERROR_MESSAGES.AVATAR.DELETE_FAILED);
+      setServerError(ERROR_MESSAGES.AVATAR.DELETE_FAILED);
     }
   }
 
@@ -133,7 +140,36 @@ function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> 
                 <HStack key={a.id} justifyContent="space-between" p={3} borderRadius="md" bg="bg.canvas">
                   <HStack>
                     {a.image ? (
-                      <Image boxSize="48px" objectFit="cover" borderRadius="full" src={a.image} alt={a.name} />
+                      <Box position="relative" w="48px" h="48px">
+                        <Image 
+                          boxSize="48px" 
+                          objectFit="cover" 
+                          borderRadius="full" 
+                          src={a.image} 
+                          alt={a.name}
+                          loading="lazy"
+                          onError={(e) => {
+                            // Hide image and show fallback on error
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                        <Box 
+                          w="48px" 
+                          h="48px" 
+                          borderRadius="full" 
+                          bg="gray.300" 
+                          display="none" 
+                          alignItems="center" 
+                          justifyContent="center"
+                          position="absolute"
+                          top="0"
+                          left="0"
+                        >
+                          <Text fontWeight="bold">{a.name.charAt(0).toUpperCase()}</Text>
+                        </Box>
+                      </Box>
                     ) : (
                       <Box w="48px" h="48px" borderRadius="full" bg="gray.300" display="flex" alignItems="center" justifyContent="center">
                         <Text fontWeight="bold">{a.name.charAt(0).toUpperCase()}</Text>
@@ -179,33 +215,86 @@ function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> 
                 Add Avatar
               </Heading>
 
-              <VStack gap={3} alignItems="stretch">
-                <Box>
-                  <Text mb={1}>Name</Text>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. John" />
-                </Box>
+              <VStack gap={4} alignItems="stretch">
+                {serverError && (
+                  <Box 
+                    role="alert" 
+                    p={3} 
+                    bg="red.50" 
+                    borderRadius="md" 
+                    borderWidth="1px" 
+                    borderColor="red.200"
+                  >
+                    <Text color="red.700" fontSize="sm">{serverError}</Text>
+                  </Box>
+                )}
 
-                <Box>
-                  <Text mb={1}>Relationship</Text>
-                  <select value={relationship} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRelationship(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: 6 }}>
-                    <option>Parent</option>
-                    <option>Sibling</option>
-                    <option>Child</option>
-                    <option>Partner</option>
-                    <option>Friend</option>
-                    <option>Other</option>
-                  </select>
-                </Box>
+                <Field.Root 
+                  required 
+                  invalid={nameTouched && !name.trim()}
+                >
+                  <Field.Label htmlFor="avatar-name">
+                    Name <Text as="span" color="red.500">*</Text>
+                  </Field.Label>
+                  <Input
+                    id="avatar-name"
+                    value={name}
+                    onChange={(e) => { 
+                      setName(e.target.value); 
+                      if (!nameTouched) setNameTouched(true);
+                    }}
+                    onBlur={() => setNameTouched(true)}
+                    placeholder="e.g. John"
+                  />
+                  {nameTouched && !name.trim() && (
+                    <Field.ErrorText>{ERROR_MESSAGES.AVATAR.NAME_REQUIRED}</Field.ErrorText>
+                  )}
+                </Field.Root>
 
-                <Box>
-                  <Text mb={1}>Photo (optional)</Text>
-                  <Input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} />
-                </Box>
+                <Field.Root>
+                  <Field.Label htmlFor="avatar-relationship">Relationship</Field.Label>
+                  <NativeSelectRoot>
+                    <NativeSelectField
+                      id="avatar-relationship"
+                      value={relationship}
+                      onChange={(e) => setRelationship(e.target.value)}
+                    >
+                      <option value="" disabled>Select relationship</option>
+                      <option value="Parent">Parent</option>
+                      <option value="Sibling">Sibling</option>
+                      <option value="Child">Child</option>
+                      <option value="Partner">Partner</option>
+                      <option value="Friend">Friend</option>
+                      <option value="Other">Other</option>
+                    </NativeSelectField>
+                  </NativeSelectRoot>
+                </Field.Root>
+
+                <Field.Root>
+                  <Field.Label htmlFor="avatar-photo">
+                    Photo <Text as="span" color="text.muted" fontSize="sm">(optional)</Text>
+                  </Field.Label>
+                  <Input 
+                    id="avatar-photo" 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                    pt={1}
+                  />
+                </Field.Root>
 
                 {preview && (
                   <Box>
-                    <Text mb={1}>Preview</Text>
-                    <Image src={preview} alt="preview" boxSize="120px" objectFit="cover" borderRadius="md" />
+                    <Text mb={2} fontWeight="medium" fontSize="sm">Preview</Text>
+                    <Image 
+                      src={preview} 
+                      alt="Avatar preview" 
+                      boxSize="120px" 
+                      objectFit="cover" 
+                      borderRadius="md"
+                      borderWidth="1px"
+                      borderColor="border.default"
+                    />
                   </Box>
                 )}
 
