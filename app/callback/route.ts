@@ -19,9 +19,33 @@ export async function GET(request: NextRequest) {
 
     // Call backend to exchange code for auth token
     const response = await serverApiClient.post(API_ENDPOINTS.AUTH.EXCHANGE, { code });
+
     // Forward any Set-Cookie header from backend so the browser receives it
     const setCookie = response.headers[HTTP_HEADERS.SET_COOKIE];
-    const successRedirect = NextResponse.redirect(new URL(PUBLIC_ROUTES.HOME, request.url));
+
+    // Extract the access token from the Set-Cookie header to store in sessionStorage
+    let accessToken: string | null = null;
+    if (setCookie) {
+      const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+      for (const cookie of cookies) {
+        if (cookie.includes('auth_token=')) {
+          const tokenMatch = cookie.match(/auth_token=([^;]+)/);
+          if (tokenMatch && tokenMatch[1]) {
+            accessToken = tokenMatch[1];
+            break;
+          }
+        }
+      }
+    }
+
+    // Redirect to a page that will store the token in sessionStorage
+    const homeUrl = new URL(PUBLIC_ROUTES.HOME, request.url);
+    if (accessToken) {
+      // Pass token as query param so the client can store it
+      homeUrl.searchParams.set('token', accessToken);
+    }
+
+    const successRedirect = NextResponse.redirect(homeUrl);
 
     if (setCookie) {
       // Handle both string and array formats

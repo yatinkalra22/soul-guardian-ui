@@ -41,6 +41,7 @@ export const HTTP_HEADERS = {
   },
   COOKIE: 'Cookie',
   SET_COOKIE: 'set-cookie',
+  AUTHORIZATION: 'Authorization',
 } as const;
 
 /**

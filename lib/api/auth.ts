@@ -50,7 +50,12 @@ export async function exchangeAuthCode(code: string): Promise<AuthExchangeRespon
  */
 export async function logout(authToken?: string): Promise<LogoutResponse> {
   try {
-    const headers = authToken ? { [HTTP_HEADERS.COOKIE]: `${COOKIES.AUTH_TOKEN}=${authToken}` } : {};
+    const headers: Record<string, string> = {};
+    if (authToken) {
+      // Include both Cookie header (for backward compatibility) and Authorization header
+      headers[HTTP_HEADERS.COOKIE] = `${COOKIES.AUTH_TOKEN}=${authToken}`;
+      headers[HTTP_HEADERS.AUTHORIZATION] = `Bearer ${authToken}`;
+    }
     const response = await serverApiClient.post<LogoutResponse>(
       API_ENDPOINTS.AUTH.LOGOUT,
       {},

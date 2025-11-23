@@ -1,5 +1,6 @@
 import { AuthKitProvider } from '@workos-inc/authkit-nextjs';
 import { ChakraUIProvider } from '../providers/chakra-provider';
+import { AuthTokenSync } from '../components/AuthTokenSync';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
@@ -10,7 +11,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ChakraUIProvider>
-          <AuthKitProvider>{children}</AuthKitProvider>
+          <AuthKitProvider>
+            <AuthTokenSync />
+            {children}
+          </AuthKitProvider>
         </ChakraUIProvider>
       </body>
     </html>

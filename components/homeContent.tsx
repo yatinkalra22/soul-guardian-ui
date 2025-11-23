@@ -15,6 +15,7 @@ import {
 } from '@chakra-ui/react';
 import { ColorModeToggle } from './colorModeToggle';
 import { getAvatars, createAvatar, deleteAvatar, Avatar } from '@/lib/api/avatar';
+import { clearClientAuth } from '@/lib/clientAuth';
 import {
   BUTTON_LABELS,
   ERROR_MESSAGES,
@@ -154,7 +155,14 @@ function AvatarManager({ signOutAction }: { signOutAction?: () => Promise<void> 
           )}
 
           <Box mt={6}>
-            <form action={signOutAction}>
+            <form action={async (formData) => {
+              // Clear client-side token first
+              clearClientAuth();
+              // Then call server-side logout
+              if (signOutAction) {
+                await signOutAction();
+              }
+            }}>
               <Button type="submit" colorPalette="blue" variant="outline">
                 Sign out
               </Button>

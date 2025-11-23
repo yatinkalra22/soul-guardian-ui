@@ -1,10 +1,11 @@
 import { clientApiClient, handleApiError } from './client';
-import { API_BASE_URLS, HTTP_HEADERS } from '@/constants/api';
+import { HTTP_HEADERS } from '@/constants/api';
 import { ERROR_MESSAGES } from '@/constants/ui';
+import { tokenManager } from '@/lib/tokenManager';
 
 /**
  * Avatar API module
- * Handles avatar-related API calls
+ * Calls backend API directly (BACKEND_API_URL) with Bearer token
  */
 
 export interface Avatar {
@@ -21,12 +22,27 @@ export interface CreateAvatarRequest {
 }
 
 /**
+ * Get authorization headers with Bearer token
+ */
+function getAuthHeaders(): Record<string, string> {
+  const token = tokenManager.getToken();
+  if (!token) {
+    throw new Error('No access token found. Please log in again.');
+  }
+  return {
+    [HTTP_HEADERS.AUTHORIZATION]: `Bearer ${token}`,
+  };
+}
+
+/**
  * Get all avatars
- * Client-side
+ * Calls backend directly with Authorization header
  */
 export async function getAvatars(): Promise<Avatar[]> {
   try {
-    const response = await clientApiClient.get<Avatar[]>(API_BASE_URLS.MCP);
+    const response = await clientApiClient.get<Avatar[]>('/api/avatars', {
+      headers: getAuthHeaders(),
+    });
     return response.data ?? [];
   } catch (error) {
     console.warn(ERROR_MESSAGES.AVATAR.FETCH_FAILED, error);
@@ -36,7 +52,7 @@ export async function getAvatars(): Promise<Avatar[]> {
 
 /**
  * Create a new avatar
- * Client-side
+ * Calls backend directly with Authorization header
  */
 export async function createAvatar(data: CreateAvatarRequest): Promise<Avatar> {
   try {
@@ -47,9 +63,10 @@ export async function createAvatar(data: CreateAvatarRequest): Promise<Avatar> {
       formData.append('photo', data.photo);
     }
 
-    const response = await clientApiClient.post<Avatar>(API_BASE_URLS.MCP, formData, {
+    const response = await clientApiClient.post<Avatar>('/api/avatars', formData, {
       headers: {
-        'Content-Type': HTTP_HEADERS.CONTENT_TYPE.FORM_DATA,
+        ...getAuthHeaders(),
+        // Don't set Content-Type - browser will set it with boundary for FormData
       },
     });
     return response.data;
@@ -60,11 +77,13 @@ export async function createAvatar(data: CreateAvatarRequest): Promise<Avatar> {
 
 /**
  * Delete an avatar
- * Client-side
+ * Calls backend directly with Authorization header
  */
 export async function deleteAvatar(id: string): Promise<void> {
   try {
-    await clientApiClient.delete(`${API_BASE_URLS.MCP}/${id}`);
+    await clientApiClient.delete(`/api/avatars/${id}`, {
+      headers: getAuthHeaders(),
+    });
   } catch (error) {
     handleApiError(error);
   }
